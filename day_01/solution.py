@@ -22,6 +22,6 @@ def main2(problem):
 
 
 if __name__ == "__main__":
-    data = list(map(int, fileinput.input()))
+    data = list(map(int, fileinput.input(files=["input"])))
     print(main1(data))
     print(main2(data))
