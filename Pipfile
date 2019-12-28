@@ -8,6 +8,9 @@ verify_ssl = true
 [packages]
 black = "*"
 isort = {extras = ["pipfile"],version = "*"}
+typing-extensions = "*"
+sdag2 = "*"
+funcy = "*"
 
 [requires]
 python_version = "3.7"
