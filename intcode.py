@@ -11,8 +11,19 @@ from itertools import chain
 from typing import Awaitable, Callable, Dict, List, Optional, Union
 
 from funcy import compose
+from typing_extensions import Protocol
 
 program_var: contextvars.ContextVar[Program] = contextvars.ContextVar("program")
+
+
+class InputProtocol(Protocol):
+    async def get(self) -> int:
+        ...
+
+
+class OutputProtocol(Protocol):
+    def put_nowait(self, output: int) -> None:
+        ...
 
 
 class Halt(Exception):
@@ -109,14 +120,14 @@ class Mode(Enum):
 @dataclass
 class Program:
     program_data: Dict[int, int]
-    input: asyncio.Queue
-    output: asyncio.Queue
+    input: InputProtocol
+    output: OutputProtocol
     instruction_pointer: int = 0
     relative_base: int = 0
 
     @classmethod
     def from_list(
-        cls, data: List[int], input: asyncio.Queue, output: asyncio.Queue
+        cls, data: List[int], input: InputProtocol, output: OutputProtocol
     ) -> Program:
         program_data = defaultdict(lambda: 0)
 
@@ -171,7 +182,7 @@ class Program:
 
 
 async def intcode_computer(
-    data: List[int], input: asyncio.Queue, output: asyncio.Queue,
+    data: List[int], input: InputProtocol, output: OutputProtocol,
 ) -> None:
     program = Program.from_list(data, input, output)
     program_var.set(program)
@@ -185,8 +196,8 @@ async def intcode_computer(
 
 def simple(program: List[int], *args) -> List[int]:
     async def main():
-        input = asyncio.Queue()
-        output = asyncio.Queue()
+        input: asyncio.Queue[int] = asyncio.Queue()
+        output: asyncio.Queue[int] = asyncio.Queue()
 
         for arg in args:
             input.put_nowait(arg)
