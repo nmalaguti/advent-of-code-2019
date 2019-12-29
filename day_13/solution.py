@@ -82,6 +82,7 @@ if __name__ == "__main__":
 
         asyncio.create_task(update_screen())
         await asyncio.create_task(intcode_computer(program, input, output))
+        await output.join()
         pprint(score)
 
     asyncio.run(part2(data))
