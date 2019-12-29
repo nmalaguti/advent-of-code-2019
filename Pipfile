@@ -12,6 +12,7 @@ typing-extensions = "*"
 sdag2 = "*"
 funcy = "*"
 more-itertools = "*"
+blessed = "*"
 
 [requires]
 python_version = "3.7"

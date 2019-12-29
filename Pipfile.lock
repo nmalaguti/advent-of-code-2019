@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "c7caa43822b928381ca4a9cc5933cb94b6a09e3d4e1ddc6ec90df3c74020f41a"
+            "sha256": "0d8965b90877ac9ad7d2ea27cea146a904cb488a6f1379628c13d848a4f350a0"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -37,6 +37,14 @@
             ],
             "index": "pypi",
             "version": "==19.10b0"
+        },
+        "blessed": {
+            "hashes": [
+                "sha256:01f3305a2f3c89a11020f2e167fe67b275697b3aead72dd869446aad47dd4707",
+                "sha256:a222783b09f266cf76f5a01f4dfd9de79650f07cbefe2cbc67ec7bb9577c1dfa"
+            ],
+            "index": "pypi",
+            "version": "==1.16.1"
         },
         "cached-property": {
             "hashes": [
@@ -319,6 +327,13 @@
                 "sha256:3a0529b4b6c2e842fd19b5ceaa95b6c9201321314825c110406d4af3331a0709"
             ],
             "version": "==0.4.3"
+        },
+        "wcwidth": {
+            "hashes": [
+                "sha256:3df37372226d6e63e1b1e1eda15c594bca98a22d33a23832a90998faa96bc65e",
+                "sha256:f4ebe71925af7b40a864553f761ed559b43544f8f71746c2d756c7fe788ade7c"
+            ],
+            "version": "==0.1.7"
         },
         "wheel": {
             "hashes": [

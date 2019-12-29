@@ -7,9 +7,12 @@ from copy import deepcopy
 from operator import itemgetter
 from pprint import pprint
 
+from blessed import Terminal
 from more_itertools import grouper
 
 from intcode import intcode_computer, simple
+
+term = Terminal()
 
 if __name__ == "__main__":
     data = list(map(int, list(fileinput.input(files=["input"]))[0].split(",")))
@@ -63,13 +66,23 @@ if __name__ == "__main__":
                     paddle_x = x
                 elif tile == 4:
                     ball_x = x
-                screen[(x, y)] = tile
 
+                # screen[(x, y)] = tile
+                #
                 # if output.empty() and screen:
+                #     await asyncio.sleep(0.1)
+                #     print(term.clear())
+                #     print(term.move(0, 0))
                 #     max_x = max(screen.keys(), key=itemgetter(0))[0] + 1
                 #     max_y = max(screen.keys(), key=itemgetter(1))[1] + 1
                 #     rows = list(map(list, [[" "] * max_x] * max_y))
-                #     sprites = [" ", "|", "-", "~", "o"]
+                #     sprites = [
+                #         " ",
+                #         term.on_yellow(" "),
+                #         term.on_red(" "),
+                #         term.on_blue(" "),
+                #         term.on_white(" "),
+                #     ]
                 #     for (x, y), tile in screen.items():
                 #         if x == -1:
                 #             print("Score:", tile)
