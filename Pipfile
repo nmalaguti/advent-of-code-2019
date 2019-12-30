@@ -13,6 +13,7 @@ sdag2 = "*"
 funcy = "*"
 more-itertools = "*"
 blessed = "*"
+cython = "*"
 
 [requires]
 python_version = "3.7"
