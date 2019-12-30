@@ -7,10 +7,11 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import Enum
 from inspect import signature
-from itertools import chain
+from itertools import product
 from typing import Awaitable, Callable, Dict, List, Optional, Union
 
-from funcy import compose
+from funcy import cached_property
+from funcy import rcompose as pipeline
 from typing_extensions import Protocol
 
 program_var: contextvars.ContextVar[Program] = contextvars.ContextVar("program")
@@ -81,40 +82,35 @@ class Opcode(Enum):
     WriteOutput         = _Opcode(4,  write_output)
     JumpIfTrue          = _Opcode(5,  jump_if_true)
     JumpIfFalse         = _Opcode(6,  jump_if_false)
-    LessThan            = _Opcode(7,  compose(int, operator.lt))
-    Equals              = _Opcode(8,  compose(int, operator.eq))
+    LessThan            = _Opcode(7,  pipeline(operator.lt, int))
+    Equals              = _Opcode(8,  pipeline(operator.eq, int))
     RelativeBaseOffset  = _Opcode(9,  relative_base_offset)
     Halt                = _Opcode(99, halt)
     # fmt: on
 
-    @property
+    @cached_property
     def id(self) -> int:
         return self._opcode.id
 
-    @property
+    @cached_property
     def arity(self) -> int:
         return self._opcode.arity
 
-    @property
-    def execute(self) -> Callable[[...], Optional[int]]:
+    @cached_property
+    def execute(self):
         return self._opcode.execute
 
     @classmethod
     def _missing_(cls, value):
-        return opcode_lookup[int(value)]
+        return OPCODE_LOOKUP[int(value)]
 
 
-opcode_lookup = {opcode.id: opcode for opcode in Opcode}
+OPCODE_LOOKUP = {opcode.id: opcode for opcode in Opcode}
 
 
-class Mode(Enum):
-    Position = 0
-    Immediate = 1
-    Relative = 2
-
-    @classmethod
-    def _missing_(cls, value):
-        return cls(int(value))
+MODES_LOOKUP = {
+    int("".join(x)): list(reversed(list(map(int, x)))) for x in product("012", repeat=3)
+}
 
 
 @dataclass
@@ -136,31 +132,29 @@ class Program:
 
         return cls(program_data, input, output)
 
-    def step(self) -> int:
-        value = self.program_data[self.instruction_pointer]
-        self.instruction_pointer += 1
-        return value
-
     def jump(self, pointer):
         self.instruction_pointer = pointer
 
-    def get(self, mode: Mode):
-        pointer = self.step()
-        if mode is Mode.Position:
+    def get(self, mode: int):
+        pointer = self.program_data[self.instruction_pointer]
+        self.instruction_pointer += 1
+
+        if mode == 0:
             return self.program_data[pointer]
-        elif mode is Mode.Immediate:
+        elif mode == 1:
             return pointer
-        elif mode is Mode.Relative:
+        elif mode == 2:
             return self.program_data[self.relative_base + pointer]
         else:
             raise RuntimeError(f"Unknown mode {mode!r}")
 
-    def set(self, mode: Mode, value: int):
-        pointer = self.step()
+    def set(self, mode: int, value: int):
+        pointer = self.program_data[self.instruction_pointer]
+        self.instruction_pointer += 1
 
-        if mode is Mode.Position:
+        if mode == 0:
             self.program_data[pointer] = value
-        elif mode is Mode.Relative:
+        elif mode == 2:
             self.program_data[self.relative_base + pointer] = value
         else:
             raise RuntimeError(f"Unknown mode {mode!r}")
@@ -169,16 +163,22 @@ class Program:
         self.relative_base += offset
 
     async def execute(self):
-        value = str(self.step())
+        value = self.program_data[self.instruction_pointer]
+        self.instruction_pointer += 1
 
-        opcode = Opcode(value[-2:])
-        modes = list(chain(reversed(list(map(Mode, value[:-2]))), [Mode.Position] * 3))
+        opcode = OPCODE_LOOKUP[value % 100]
+        arity = opcode.arity
+        modes = MODES_LOOKUP[value // 100]
 
-        result = opcode.execute(*[self.get(mode) for mode in modes[: opcode.arity]])
-        if asyncio.iscoroutine(result):
+        result = opcode.execute(*map(self.get, modes[:arity]))
+        if isinstance(result, int):
+            self.set(modes[arity], result)
+        elif result is None:
+            pass
+        elif asyncio.iscoroutine(result):
             result = await result
-        if result is not None:
-            self.set(modes[opcode.arity], result)
+            if result is not None:
+                self.set(modes[arity], result)
 
 
 async def intcode_computer(
